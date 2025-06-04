@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MQTT Messaging System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            overflow: hidden;
+            width: 90%;
+            max-width: 800px;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .login-form, .messaging-interface {
+            display: none;
+        }
+        
+        .login-form.active, .messaging-interface.active {
+            display: block;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #333;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        button:hover {
+            transform: translateY(-1px);
+        }
+        
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-weight: 500;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .messaging-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .control-group {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+        }
+        
+        .control-group h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .qos-info {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        
+        .qos-info h4 {
+            margin-bottom: 10px;
+            color: #495057;
+        }
+        
+        .qos-info ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        
+        .qos-info li {
+            padding: 5px 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .qos-info li:last-child {
+            border-bottom: none;
+        }
+        
+        .feature-list {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        
+        .feature-list h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .feature-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .feature-item:last-child {
+            border-bottom: none;
+        }
+        
+        .feature-item .check {
+            color: #28a745;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+        
+        @media (max-width: 768px) {
+            .messaging-controls {
+                grid-template-columns: 1fr;
+            }
+            
+            .container {
+                width: 95%;
+                margin: 10px;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 MQTT Messaging System</h1>
+            <p>Sistem Integrasi dengan MQTT 5.0 | QoS 0,1,2 | Request-Response | Authentication</p>
+        </div>
+        
+        <div class="content">
+            <!-- Login Form -->
+            <div class="login-form active">
+                <h2>Login ke Sistem</h2>
+                <div class="form-group">
+                    <label for="username">Username:</label>
+                    <input type="text" id="username" placeholder="admin atau user1">
+                </div>
+                <div class="form-group">
+                    <label for="password">Password:</label>
+                    <input type="password" id="password" placeholder="admin123 atau user123">
+                </div>
+                <button onclick="login()">Login & Connect MQTT</button>
+                <div id="loginStatus"></div>
+                
+                <div class="feature-list">
+                    <h3>✨ Fitur yang Diimplementasikan:</h3>
+                    <div class="feature-item">
+                        <span class="check">✅</span>
+                        <span>MQTT 5.0 dengan Authentication JWT</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="check">✅</span>
+                        <span>QoS Level 0, 1, dan 2</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="check">✅</span>
+                        <span>Retained Messages untuk Status</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="check">✅</span>
+                        <span>Last Will and Testament</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="check">✅</span>
+                        <span>Message Expiry Interval</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="check">✅</span>
+                        <span>Request-Response dengan Response Topic & Correlation Data</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="check">✅</span>
+                        <span>Flow Control & Rate Limiting</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="check">✅</span>
+                        <span>Ping-Pong Keep-Alive</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Messaging Interface -->
+            <div class="messaging-interface">
+                <div class="messaging-controls">
+                    <div class="control-group">
+                        <h3>📤 Kirim Direct Message</h3>
+                        <div class="form-group">
+                            <label for="toUser">Ke User:</label>
+                            <input type="text" id="toUser" placeholder="user1 atau admin">
+                        </div>
+                        <div class="form-group">
+                            <label for="message">Pesan:</label>
+                            <textarea id="message" rows="3" placeholder="Tulis pesan..."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="qosLevel">QoS Level:</label>
+                            <select id="qosLevel">
+                                <option value="0">QoS 0 - At most once (Fire and forget)</option>
+                                <option value="1" selected>QoS 1 - At least once (Acknowledged)</option>
+                                <option value="2">QoS 2 - Exactly once (Assured delivery)</option>
+                            </select>
+                        </div>
+                        <button onclick="sendMessage()">Kirim Pesan</button>
+                    </div>
+                    
+                    <div class="control-group">
+                        <h3>🔄 Request-Response Test</h3>
+                        <div class="form-group">
+                            <label for="requestToUser">Request ke User:</label>
+                            <input type="text" id="requestToUser" placeholder="user1 atau admin">
+                        </div>
+                        <div class="form-group">
+                            <label for="requestData">Request Data:</label>
+                            <input type="text" id="requestData" placeholder="Data yang akan dikirim">
+                        </div>
+                        <div class="form-group">
+                            <label for="timeout">Timeout (ms):</label>
+                            <input type="number" id="timeout" value="30000" min="5000" max="60000">
+                        </div>
+                        <button onclick="sendRequest()">Kirim Request</button>
+                        <div id="responseResult"></div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <button onclick="logout()" style="background: #dc3545;">Logout & Disconnect</button>
+                </div>
+                
+                <div id="messagingStatus"></div>
+                
+                <div class="qos-info">
+                    <h4>📋 Penjelasan QoS Levels:</h4>
+                    <ul>
+                        <li><strong>QoS 0:</strong> At most once - Pesan dikirim sekali tanpa konfirmasi (fastest, least reliable)</li>
+                        <li><strong>QoS 1:</strong> At least once - Pesan dijamin terkirim minimal sekali (balanced)</li>
+                        <li><strong>QoS 2:</strong> Exactly once - Pesan dijamin terkirim tepat sekali (slowest, most reliable)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+        let authToken = null;
+
+        async function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const statusDiv = document.getElementById('loginStatus');
+            
+            if (!username || !password) {
+                showStatus(statusDiv, 'Mohon isi username dan password', 'error');
+                return;
+            }
+            
+            try {
+                // Login first
+                const loginResponse = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                if (!loginResponse.ok) {
+                    throw new Error('Login gagal');
+                }
+                
+                const loginData = await loginResponse.json();
+                authToken = loginData.token;
+                currentUser = loginData.username;
+                
+                showStatus(statusDiv, '✅ Login berhasil, connecting to MQTT...', 'success');
+                
+                // Connect to MQTT
+                const mqttResponse = await fetch('/api/connect-mqtt', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: currentUser, token: authToken })
+                });
+                
+                if (!mqttResponse.ok) {
+                    throw new Error('MQTT connection gagal');
+                }
+                
+                showStatus(statusDiv, '🚀 Berhasil terhubung ke MQTT! Redirecting...', 'success');
+                
+                setTimeout(() => {
+                    document.querySelector('.login-form').classList.remove('active');
+                    document.querySelector('.messaging-interface').classList.add('active');
+                    document.querySelector('.header h1').innerHTML = `🚀 MQTT Messaging - Welcome ${currentUser}!`;
+                }, 1500);
+                
+            } catch (error) {
+                showStatus(statusDiv, `❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function sendMessage() {
+            const toUser = document.getElementById('toUser').value;
+            const message = document.getElementById('message').value;
+            const qos = document.getElementById('qosLevel').value;
+            const statusDiv = document.getElementById('messagingStatus');
+            
+            if (!toUser || !message) {
+                showStatus(statusDiv, 'Mohon isi user tujuan dan pesan', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/send-message', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        from: currentUser,
+                        to: toUser,
+                        message: message,
+                        qos: parseInt(qos)
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Gagal mengirim pesan');
+                }
+                
+                const data = await response.json();
+                showStatus(statusDiv, `✅ Pesan terkirim ke ${toUser} (QoS ${qos}) - ID: ${data.messageId}`, 'success');
+                
+                // Clear form
+                document.getElementById('message').value = '';
+                
+            } catch (error) {
+                showStatus(statusDiv, `❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function sendRequest() {
+            const toUser = document.getElementById('requestToUser').value;
+            const requestData = document.getElementById('requestData').value;
+            const timeout = parseInt(document.getElementById('timeout').value);
+            const statusDiv = document.getElementById('messagingStatus');
+            const responseDiv = document.getElementById('responseResult');
+            
+            if (!toUser || !requestData) {
+                showStatus(statusDiv, 'Mohon isi user tujuan dan request data', 'error');
+                return;
+            }
+            
+            try {
+                showStatus(responseDiv, '⏳ Mengirim request dan menunggu response...', 'success');
+                
+                const response = await fetch('/api/send-request', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        from: currentUser,
+                        to: toUser,
+                        requestData: requestData,
+                        timeout: timeout
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Gagal mengirim request');
+                }
+                
+                const data = await response.json();
+                showStatus(statusDiv, `✅ Request-Response berhasil ke ${toUser}`, 'success');
+                showStatus(responseDiv, `📨 Response: ${JSON.stringify(data.response, null, 2)}`, 'success');
+                
+                // Clear form
+                document.getElementById('requestData').value = '';
+                
+            } catch (error) {
+                showStatus(statusDiv, `❌ Request Error: ${error.message}`, 'error');
+                showStatus(responseDiv, '', '');
+            }
+        }
+
+        function logout() {
+            currentUser = null;
+            authToken = null;
+            
+            document.querySelector('.messaging-interface').classList.remove('active');
+            document.querySelector('.login-form').classList.add('active');
+            document.querySelector('.header h1').innerHTML = '🚀 MQTT Messaging System';
+            
+            // Clear forms
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+            document.getElementById('toUser').value = '';
+            document.getElementById('message').value = '';
+            document.getElementById('requestToUser').value = '';
+            document.getElementById('requestData').value = '';
+            
+            // Clear status
+            document.getElementById('loginStatus').innerHTML = '';
+            document.getElementById('messagingStatus').innerHTML = '';
+            document.getElementById('responseResult').innerHTML = '';
+        }
+
+        function showStatus(element, message, type) {
+            element.innerHTML = `<div class="status ${type}">${message}</div>`;
+            
+            if (type === 'success') {
+                setTimeout(() => {
+                    element.innerHTML = '';
+                }, 5000);
+            }
+        }
+
+        // Enter key handlers
+        document.getElementById('password').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                login();
+            }
+        });
+
+        document.getElementById('message').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        document.getElementById('requestData').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendRequest();
+            }
+        });
+    </script>
+</body>
+</html>
